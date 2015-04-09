@@ -21,15 +21,11 @@
        decomp-eigenvalue
        sort-components))
 
-
 (defn sort-components [eigens]
   (let [{:keys [values vectors]} eigens
         coupled-values (map vector values vectors)
         sorted-components (sort-by first > coupled-values)]
     (map second sorted-components)))
-
-(def plastics (import-matrix "resources/plastic_4_10.txt"))
-(def p (matrix [[1 2 3 4 5] [2 3 4 5 6] [10 9 8 7 6]]))
 
 (defn calc-component-phase [x u]
   (->> u
@@ -43,7 +39,7 @@
       u
       (recur (calc-component-phase m u)))))
 
-(defn new-matrix [E t]
+(defn new-matrix-iteration [E t]
   (let [p (normalize (matrix-projection E t))]
     (minus E (mmult t (trans p)))))
 
@@ -57,8 +53,6 @@
                            (new-matrix mat vecs)])
                         [(get-nth-col m 0) (matrix-mean-center m)]))))))
 
-
-(calc-component p 0.00001)
 (defn check-threshold [values thresh]
   ; Returns false if the difference between the new and old values
   ; is less than the threshold
