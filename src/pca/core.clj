@@ -31,10 +31,6 @@
     (let [projection (mmult m v)]
       (div projection (sum-of-squares v)))))
 
-(defn auto-projection [m]
-  (let [v (get-nth-col m 0)]
-    (matrix-projection (trans m) v)))
-
 (defn sort-components [eigens]
   (let [{:keys [values vectors]} eigens
         coupled-values (map vector values vectors)
