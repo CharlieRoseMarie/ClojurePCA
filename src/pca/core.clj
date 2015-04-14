@@ -31,18 +31,6 @@
     (let [projection (mmult m v)]
       (div projection (sum-of-squares v)))))
 
-(defn sort-components [eigens]
-  (let [{:keys [values vectors]} eigens
-        coupled-values (map vector values vectors)
-        sorted-components (sort-by first > coupled-values)]
-    (map second sorted-components)))
-
-(defn PCA [m]
-  (->> m
-       covariance
-       decomp-eigenvalue
-       sort-components))
-
 (defn calc-scales-and-loadings-pass [m t]
   (let [p (normalize (matrix-projection (trans m) t))]
     {:t (matrix-projection m p) :p p}))
@@ -57,7 +45,7 @@
 (defn correction-matrix [sl]
   (mmult (:t sl) (trans (:p sl))))
 
-(defn Fast-PCA [m n]
+(defn PCA [m n]
   (map first
     (take n
         (iterate (fn [[sl x]]
