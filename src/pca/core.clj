@@ -5,7 +5,7 @@
 
 (set! *warn-on-reflection* true)
 
-(def THRESH 0.00001)
+(def THRESH 0.0000001)
 
 (defn import-matrix [filename]
   (to-matrix (read-dataset filename :delim \tab)))
@@ -33,25 +33,26 @@
        normalize
        (matrix-projection (trans x))))
 
-(defn calc-component [m thresh]
-  (loop [u (calc-component-phase m (get-nth-col m 0))]
-    (if (check-threshold [(get-nth-col m 0) u] thresh)
-      u
-      (recur (calc-component-phase m u)))))
+(defn calc-scales-and-loadings-pass [m t]
+  (let [p (normalize (matrix-projection (trans m) t))]
+    {:t (matrix-projection m p) :p p}))
 
-(defn new-matrix-iteration [E t]
-  (let [p (normalize (matrix-projection E t))]
-    (minus E (mmult t (trans p)))))
+(defn calc-scales-and-loadings [m]
+  (let [initial-t (get-nth-col m 0)]
+    (loop [sl (calc-scales-and-loadings-pass m initial-t) t initial-t]
+      (if (check-threshold [t (:t sl)] THRESH)
+        sl
+        (recur (calc-scales-and-loadings-pass m {:t sl}) sl)))))
 
-(defn fast-PCA [m num-of-components]
-  (to-vect
-    (rest
-      (map first
-        (take (inc num-of-components)
-               (iterate (fn [[vecs mat]]
-                          [(calc-component mat THRESH)
-                           (new-matrix mat vecs)])
-                        [(get-nth-col m 0) (matrix-mean-center m)]))))))
+(defn correction-matrix [sl]
+  (mmult (:t sl) (trans (:p sl))))
+
+(defn Fast-PCA [m n]
+  (map first
+    (take n
+        (iterate (fn [[sl x]]
+                   [(calc-scales-and-loadings x) (minus x (correction-matrix sl))])
+                   [(calc-scales-and-loadings m) (minus m (correction-matrix (calc-scales-and-loadings m)))]))))
 
 (defn check-threshold [values thresh]
   ; Returns false if the difference between the new and old values
@@ -63,8 +64,12 @@
 
 (defn matrix-projection [m v]
   (when-not (zero? (sum-of-squares v))
-    (let [projection (mmult (trans m) v)]
+    (let [projection (mmult m v)]
       (div projection (sum-of-squares v)))))
+
+(defn auto-projection [m]
+  (let [v (get-nth-col m 0)]
+    (matrix-projection (trans m) v)))
 
 (defn get-nth-col [m n]
   (sel m :cols n))
