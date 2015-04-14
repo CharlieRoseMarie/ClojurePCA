@@ -10,7 +10,7 @@
 (defn import-matrix [filename]
   (to-matrix (read-dataset filename :delim \tab)))
 
-(defn check-threshold [values thresh]
+(defn- check-threshold [values thresh]
   ; Returns false if the difference between the new and old values
   ; is less than the threshold
   (let [[old new] values]
@@ -23,7 +23,7 @@
     (when-not (zero? sum-of)
       (div v (Math/sqrt sum-of)))))
 
-(defn get-nth-col [m n]
+(defn- get-nth-col [m n]
   (sel m :cols n))
 
 (defn matrix-projection [m v]
@@ -31,18 +31,18 @@
     (let [projection (mmult m v)]
       (div projection (sum-of-squares v)))))
 
-(defn calc-scales-and-loadings-pass [m t]
+(defn- calc-scales-and-loadings-pass [m t]
   (let [p (normalize (matrix-projection (trans m) t))]
     {:t (matrix-projection m p) :p p}))
 
-(defn calc-scales-and-loadings [m]
+(defn- calc-scales-and-loadings [m]
   (let [initial-t (get-nth-col m 0)]
     (loop [sl (calc-scales-and-loadings-pass m initial-t) t initial-t]
       (if (check-threshold [t (:t sl)] THRESH)
         sl
         (recur (calc-scales-and-loadings-pass m {:t sl}) sl)))))
 
-(defn correction-matrix [sl]
+(defn- correction-matrix [sl]
   (mmult (:t sl) (trans (:p sl))))
 
 (defn PCA [m n]
