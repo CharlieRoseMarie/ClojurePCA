@@ -5,7 +5,7 @@
 
 (set! *warn-on-reflection* true)
 
-(def THRESH 0.0000001)
+(def THRESH 0.00001)
 
 (defn import-matrix [filename]
   (to-matrix (read-dataset filename :delim \tab)))
